@@ -2,8 +2,10 @@
 // Db.cs
 //
 // Author:
+//   Stephen Shaw <sshaw@decriptor.com>
 //   Ruben Vermeersch <ruben@savanne.be>
 //
+// Copyright (C) 2013 Stephen Shaw
 // Copyright (C) 2010 Novell, Inc.
 // Copyright (C) 2010 Ruben Vermeersch
 //
@@ -119,13 +121,13 @@ namespace FSpot.Database
 
 		bool already_disposed = false;
 
-		protected virtual void Dispose (bool is_disposing)
+		protected virtual void Dispose (bool disposing)
 		{
 			if (already_disposed)
 				return;
 
 	    		//Free managed resources
-			if (is_disposing)
+			if (disposing)
 				Database.Dispose ();
 
 	    		//Free unmanaged resources
@@ -134,7 +136,7 @@ namespace FSpot.Database
 
 		~Db ()
 		{
-			Log.DebugFormat ("Finalizer called on {0}. Should be Disposed", GetType ());
+			Console.WriteLine ("Finalizer called on {0}. Should be Disposed", GetType ());
 			Dispose (false);
 		}
 

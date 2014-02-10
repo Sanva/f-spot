@@ -43,10 +43,10 @@ DISTCLEANFILES = \
 DISTCHECK_CONFIGURE_FLAGS = --disable-scrollkeeper
 
 if GCONF_SCHEMAS_INSTALL
-install-data-local:
+install-data-local: copy_bin
 	-GCONF_CONFIG_SOURCE=$(GCONF_SCHEMA_CONFIG_SOURCE) $(GCONFTOOL) --makefile-install-rule $(srcdir)/$(schema_DATA)
 else
-install-data-local:
+install-data-local: copy_bin
 endif
 
 all: sln_build
@@ -55,7 +55,7 @@ csharp:
 	@pushd .; \
 	echo ""; \
 	echo "Starting csharp with Gtk#, Hyena, FSpot, etc referenced"; \
-	csharp -lib:bin/ -pkg:glib-sharp-2.0 -pkg:gtk-sharp-2.0 -pkg:gconf-sharp-2.0 -pkg:mono-addins -r:lib/gio-sharp/gio/gio-sharp.dll -r:lib/unique-sharp/unique/unique-sharp.dll -reference:bin/f-spot.exe $(addprefix "-reference:", $(wildcard bin/*.dll)); \
+	csharp -lib:bin/ -pkg:glib-sharp-2.0 -pkg:gtk-sharp-2.0 -pkg:gconf-sharp-2.0 -r:lib/unique-sharp/unique/unique-sharp.dll -reference:bin/f-spot.exe $(addprefix "-reference:", $(wildcard bin/*.dll)); \
 	popd;
 
 run:
@@ -63,11 +63,9 @@ run:
 	../src/Clients/MainApp/f-spot --uninstalled --debug; \
 	popd;
 
-install-data-local: copy_bin
-
 copy_bin:
-	mkdir -p $(libdir)/f-spot
-	cp -r bin/* $(libdir)/f-spot/
+	mkdir -p $(DESTDIR)/$(libdir)/f-spot
+	cp -r bin/* $(DESTDIR)/$(libdir)/f-spot/
 
 test:
 	@pushd tests; \

@@ -50,6 +50,7 @@
     <Compile Include="FSpot.Utils\Vector.cs" />
     <Compile Include="FSpot.Utils\DelayedOperation.cs" />
     <Compile Include="FSpot.Utils\TargetListExtensionMethods.cs" />
+    <Compile Include="FSpot.Utils\DisposableCache.cs" />
   </ItemGroup>
   <ProjectExtensions>
     <MonoDevelop>
@@ -73,12 +74,6 @@
     <Reference Include="gtk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
     <Reference Include="System" />
     <Reference Include="Mono.Posix" />
-    <Reference Include="nunit.framework, Version=2.4.8.0, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77">
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
-    <Reference Include="taglib-sharp, Version=2.0.4.0, Culture=neutral, PublicKeyToken=db62eba44689b5b0">
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
     <Reference Include="gtk-sharp-beans">
       <HintPath>..\..\..\external\gtk-sharp-beans.dll</HintPath>
       <Private>False</Private>
@@ -101,6 +96,10 @@
     <ProjectReference Include="..\..\..\external\Hyena\Hyena\Hyena.csproj">
       <Project>{95374549-9553-4C1E-9D89-667755F90E12}</Project>
       <Name>Hyena</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\external\taglib-sharp\src\taglib-sharp.csproj">
+      <Project>{6B143A39-C7B2-4743-9917-92262C60E9A6}</Project>
+      <Name>taglib-sharp</Name>
     </ProjectReference>
   </ItemGroup>
 </Project>
