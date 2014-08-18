@@ -167,7 +167,10 @@ namespace FSpot {
 			image_view.DragDataReceived += HandleDragDataReceived;
 			Gtk.Drag.DestSet (image_view, DestDefaults.All, (TargetEntry[])targetList,
 					DragAction.Copy | DragAction.Move);
+			image_scrolled.SetPolicy (PolicyType.Always, PolicyType.Always);
 			image_scrolled.Add (image_view);
+
+			image_scrolled.BorderWidth = 250;
 
 			Window.ShowAll ();
 

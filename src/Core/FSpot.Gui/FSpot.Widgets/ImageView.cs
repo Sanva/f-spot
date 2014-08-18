@@ -43,24 +43,58 @@ using Hyena;
 
 namespace FSpot.Widgets
 {
-	public partial class ImageView : Container
+	public partial class ImageView : Container, IScrollable
 	{
 #region public API
 		protected ImageView (IntPtr raw) : base (raw) { }
 
-		public ImageView (Adjustment hadjustment, Adjustment vadjustment, bool canSelect)
+//		public ImageView (Adjustment hadjustment, Adjustment vadjustment, bool canSelect)
+//		{
+//			// GTK3: https://developer.gnome.org/gtk3/stable/ch24s02.html#id-1.6.3.4.14
+//			OnSetScrollAdjustments (hadjustment, vadjustment);
+//			AdjustmentsChanged += ScrollToAdjustments;
+//			HasWindow &= !HasWindow;
+//			CanFocus = true;
+//
+//			can_select = canSelect;
+//		}
+
+		public ImageView (bool canSelect = true) : base ()
 		{
-			// GTK3: https://developer.gnome.org/gtk3/stable/ch24s02.html#id-1.6.3.4.14
-			OnSetScrollAdjustments (hadjustment, vadjustment);
-			AdjustmentsChanged += ScrollToAdjustments;
 			HasWindow &= !HasWindow;
 			CanFocus = true;
 
 			can_select = canSelect;
-		}
 
-		public ImageView (bool canSelect = true) : this (null, null, canSelect)
-		{
+			AddNotification ("hadjustment", OnHadjustmentChanged);
+
+//			Realized += (object sender, EventArgs e) => {
+//				Console.WriteLine ("ImageView.Realized");
+//
+//				Window.Events |= EventMask.ExposureMask
+//				           | EventMask.ButtonPressMask
+//				           | EventMask.ButtonReleaseMask
+//				           | EventMask.PointerMotionMask
+//				           | EventMask.PointerMotionHintMask
+//				           | EventMask.ScrollMask
+//				           | EventMask.KeyPressMask
+//				           | EventMask.LeaveNotifyMask;
+//
+//				Window.Events = EventMask.AllEventsMask;
+////				Window.Events |= EventMask.ButtonPressMask;
+//
+//				Window.BackgroundPattern = null;
+////				Window.UserData = Handle;
+//
+//				Style.Attach (Window);
+//				Style.SetBackground (Window, StateType.Normal);
+//
+//				OnRealizedChildren ();
+//			};
+
+			ScrollEvent += (o, args) => {
+				Console.WriteLine ("PhotoView.ScrollEvent");
+			};
 		}
 
 		Pixbuf pixbuf;
@@ -75,7 +109,10 @@ namespace FSpot.Widgets
 
 				ComputeScaledSize ();
 				AdjustmentsChanged -= ScrollToAdjustments;
-				Hadjustment.Value = Vadjustment.Value = 0;
+
+				if (Hadjustment != null)
+					Hadjustment.Value = Vadjustment.Value = 0;
+
 				XOffset = YOffset = 0;
 				AdjustmentsChanged += ScrollToAdjustments;
 				QueueDraw ();
@@ -113,8 +150,11 @@ namespace FSpot.Widgets
 			set { pointer_mode = value; } 
 		}
 
-		public Adjustment Hadjustment { get; private set; }
-		public Adjustment Vadjustment { get; private set; }
+		public ScrollablePolicy HscrollPolicy { get; set; }
+		public ScrollablePolicy VscrollPolicy { get; set; }
+
+		public Adjustment Hadjustment { get; set; }
+		public Adjustment Vadjustment { get; set; }
 
 		bool can_select = false;
 		public bool CanSelect {
@@ -321,6 +361,9 @@ namespace FSpot.Widgets
 
         protected override void OnRealized ()
         {
+//			if (!Parent.IsRealized)
+//				Parent.Realize ();
+
 			IsRealized = true;
             Window = new Gdk.Window (ParentWindow,
 					new WindowAttr { 
@@ -343,8 +386,7 @@ namespace FSpot.Widgets
                     },
 					WindowAttributesType.X | WindowAttributesType.Y | WindowAttributesType.Visual);
 
-			// GTK3
-//			GdkWindow.SetBackPixmap (null, false);
+			Window.BackgroundPattern = null;
             Window.UserData = Handle;
 
             Style.Attach (Window);
@@ -367,6 +409,56 @@ namespace FSpot.Widgets
 //            OnSizeRequestedChildren ();
 //        }
 
+		protected override void OnGetPreferredHeight (out int minimum_height, out int natural_height)
+		{Console.WriteLine ("OnGetPreferredHeight");
+			if (Pixbuf == null)
+				minimum_height = 0;
+			else
+				minimum_height = (int) scaled_height;
+
+			natural_height = minimum_height;
+			Console.WriteLine (scaled_height);
+			Console.WriteLine (natural_height);
+		}
+
+		protected override void OnGetPreferredWidthForHeight (int height,
+		                                                      out int minimum_width,
+		                                                      out int natural_width)
+		{Console.WriteLine ("OnGetPreferredWidthForHeight");
+			if (Pixbuf == null || Pixbuf.Height == 0)
+				minimum_width = 0;
+			else
+				minimum_width = Pixbuf.Width / Pixbuf.Height * height;
+
+			natural_width = minimum_width;
+			Console.WriteLine (minimum_width + "×" + height);
+		}
+
+		protected override void OnGetPreferredWidth (out int minimum_width, out int natural_width)
+		{Console.WriteLine ("OnGetPreferredWidth");
+			if (Pixbuf == null)
+				minimum_width = 0;
+			else
+				minimum_width = (int) scaled_width;
+
+			natural_width = minimum_width;
+			Console.WriteLine (scaled_width);
+			Console.WriteLine (natural_width);
+		}
+
+		protected override void OnGetPreferredHeightForWidth (int width,
+		                                                      out int minimum_height,
+		                                                      out int natural_height)
+		{Console.WriteLine ("OnGetPreferredHeightForWidth");
+			if (Pixbuf == null || Pixbuf.Width == 0)
+				minimum_height = 0;
+			else
+				minimum_height = Pixbuf.Height / Pixbuf.Width * width;
+
+			natural_height = minimum_height;
+			Console.WriteLine (width + "×" + minimum_height);
+		}
+
         protected override void OnSizeAllocated (Rectangle allocation)
         {
             min_zoom = ComputeMinZoom (upscale);
@@ -386,9 +478,10 @@ namespace FSpot.Widgets
                 Window.MoveResize (allocation.X, allocation.Y, allocation.Width, allocation.Height);
             }
 
-            if (XOffset > Hadjustment.Upper - Hadjustment.PageSize)
+            if (Hadjustment != null && XOffset > Hadjustment.Upper - Hadjustment.PageSize)
                 ScrollTo ((int)(Hadjustment.Upper - Hadjustment.PageSize), YOffset, false);
-            if (YOffset > Vadjustment.Upper - Vadjustment.PageSize)
+
+            if (Vadjustment != null && YOffset > Vadjustment.Upper - Vadjustment.PageSize)
                 ScrollTo (XOffset, (int)(Vadjustment.Upper - Vadjustment.PageSize), false);
 
             base.OnSizeAllocated (allocation);
@@ -397,40 +490,25 @@ namespace FSpot.Widgets
                 ZoomFit (upscale);
         }
 
-		// GTK3: Base class doesn't have this?
-//		protected override bool OnDrawn (Cairo.Context cr)
-//		{
-//			// GTK3
-////			if (evnt.Window != GdkWindow)
-////				return false;
-//
-////			foreach (Rectangle area in evnt.Region.GetRectangles ())
-////			{
-////				var p_area = new Rectangle (Math.Max (0, area.X), Math.Max (0, area.Y),
-////					Math.Min (Allocation.Width, area.Width), Math.Min (Allocation.Height, area.Height));
-////				if (p_area == Rectangle.Zero)
-////					continue;
-////
-////				//draw synchronously if InterpType.Nearest or zoom 1:1
-////				if (Interpolation == InterpType.Nearest || zoom == 1.0) {
-////					PaintRectangle (p_area, InterpType.Nearest);
-////					continue;
-////				}
-////
-////				//Do this on idle ???
-////				PaintRectangle (p_area, Interpolation);
-////			}
-////
-////			if (can_select)
-////				OnSelectionExposeEvent (evnt);
-////
-////			return true;
-//			return base.OnDrawn (cr);
-//		}
+		protected override bool OnDrawn (Cairo.Context cr)
+		{Console.WriteLine ("OnDrawn. Allocation: " + Allocation);
+			//draw synchronously if InterpType.Nearest or zoom 1:1
+			if (Interpolation == InterpType.Nearest || zoom == 1.0) {
+				PaintRectangle (Allocation, InterpType.Nearest, cr);
+			} else {
+				//Do this on idle ???
+				PaintRectangle (Allocation, Interpolation, cr);
+			}
+
+			if (can_select)
+				OnSelectionExposeEvent (cr);
+
+			return base.OnDrawn (cr);
+		}
 
 		// GTK3: https://developer.gnome.org/gtk3/stable/ch24s02.html#id-1.6.3.4.14
 		protected void OnSetScrollAdjustments (Adjustment hadjustment, Adjustment vadjustment)
-		{
+		{Console.WriteLine ("OnSetScrollAdjustments");
 			if (hadjustment == null)
 				hadjustment = new Adjustment (0, 0, 0, 0, 0, 0);
 			if (vadjustment == null)
@@ -453,6 +531,14 @@ namespace FSpot.Widgets
 
 			if (need_change)
 				HandleAdjustmentsValueChanged (this, EventArgs.Empty);
+		}
+
+		protected void OnHadjustmentChanged (object o, GLib.NotifyArgs args)
+		{Console.WriteLine ("OnHadjustmentChanged");
+			Hadjustment.Upper = scaled_width;
+			Hadjustment.ValueChanged += HandleAdjustmentsValueChanged;
+
+			HandleAdjustmentsValueChanged (this, EventArgs.Empty);
 		}
 
 		protected override bool OnButtonPressEvent (EventButton evnt)
@@ -499,7 +585,7 @@ namespace FSpot.Widgets
 		}
 
 		protected override bool OnScrollEvent (EventScroll evnt)
-		{
+		{Console.WriteLine ("OnScrollEvent");
 			if ((evnt.State & ModifierType.ShiftMask) == 0) {//no shift, let's zoom
 				ZoomAboutPoint ((evnt.Direction == ScrollDirection.Up || evnt.Direction == ScrollDirection.Right) ? ZOOM_FACTOR : 1.0 / ZOOM_FACTOR,
 					(int)evnt.X, (int)evnt.Y);
@@ -622,16 +708,18 @@ namespace FSpot.Widgets
             double y_anchor = (double)(y - y_offset) / (double)scaled_height;
             ComputeScaledSize ();
 
-            AdjustmentsChanged -= ScrollToAdjustments;
-            if (scaled_width < Allocation.Width)
-                Hadjustment.Value = XOffset = 0;
-            else
-                Hadjustment.Value = XOffset = Clamp ((int)(x_anchor * scaled_width - x), 0, (int)(Hadjustment.Upper - Hadjustment.PageSize));
-            if (scaled_height < Allocation.Height)
-                Vadjustment.Value = YOffset = 0;
-            else
-                Vadjustment.Value = YOffset = Clamp ((int)(y_anchor * scaled_height - y), 0, (int)(Vadjustment.Upper - Vadjustment.PageSize));
-            AdjustmentsChanged += ScrollToAdjustments;
+			if (Hadjustment != null && Vadjustment != null) {
+				AdjustmentsChanged -= ScrollToAdjustments;
+				if (scaled_width < Allocation.Width)
+					Hadjustment.Value = XOffset = 0;
+				else
+					Hadjustment.Value = XOffset = Clamp ((int)(x_anchor * scaled_width - x), 0, (int)(Hadjustment.Upper - Hadjustment.PageSize));
+				if (scaled_height < Allocation.Height)
+					Vadjustment.Value = YOffset = 0;
+				else
+					Vadjustment.Value = YOffset = Clamp ((int)(y_anchor * scaled_height - y), 0, (int)(Vadjustment.Upper - Vadjustment.PageSize));
+				AdjustmentsChanged += ScrollToAdjustments;
+			}
 
             EventHandler eh = ZoomChanged;
             if (eh != null)
@@ -645,10 +733,11 @@ namespace FSpot.Widgets
 			// GTK3
 
 //			GdkWindow.DrawRectangle (Style.BackgroundGCs [(int)StateType.Normal], true, area);
+
 		}
 
-		void PaintRectangle (Rectangle area, InterpType interpolation)
-		{
+		void PaintRectangle (Rectangle area, InterpType interpolation, Cairo.Context cr)
+		{Console.WriteLine ("PaintRectangle");
 			int x_offset = scaled_width < Allocation.Width ? (int)(Allocation.Width - scaled_width) / 2 : -XOffset;
 			int y_offset = scaled_height < Allocation.Height ? (int)(Allocation.Height - scaled_height) / 2 : -YOffset;
 			//Draw background
@@ -682,6 +771,15 @@ namespace FSpot.Widgets
 //						      area.Width, area.Height,
 //						      RgbDither.Max,
 //						      area.X - x_offset, area.Y - y_offset);
+
+				Console.WriteLine ("Hola?");
+
+				cr.Save ();
+				Gdk.CairoHelper.SetSourcePixbuf (cr, Pixbuf, area.X - x_offset, area.Y - y_offset);
+				cr.Rectangle (area.X, area.Y, area.Width, area.Height);
+				cr.Fill ();
+				cr.Restore ();
+
 				return;
 			}
 
@@ -717,6 +815,14 @@ namespace FSpot.Widgets
 //							      area.Width, area.Height,
 //							      RgbDither.Max,
 //							      area.X - x_offset, area.Y - y_offset);
+
+					cr.Save ();
+					Gdk.CairoHelper.SetSourcePixbuf (cr, dest_pixbuf, 0, 0);
+					cr.Rectangle (area.X, area.Y, area.Width, area.Height);
+					cr.Fill ();
+					cr.Restore ();
+
+					Console.WriteLine (":S");
 				}
 			}
 		}
@@ -740,18 +846,22 @@ namespace FSpot.Widgets
 				scaled_height = (uint)Math.Floor (height * Zoom + .5);
 			}
 
-			Hadjustment.PageSize = Math.Min (scaled_width, Allocation.Width);
-			Hadjustment.PageIncrement = scaled_width * .9;
-			Hadjustment.StepIncrement = 32;
-			Hadjustment.Upper = scaled_width;
-			Hadjustment.Lower = 0;
+			if (Hadjustment != null) {
+				Hadjustment.PageSize = Math.Min (scaled_width, Allocation.Width);
+				Hadjustment.PageIncrement = scaled_width * .9;
+				Hadjustment.StepIncrement = 32;
+				Hadjustment.Upper = scaled_width;
+				Hadjustment.Lower = 0;
+			}
 
-			Vadjustment.PageSize = Math.Min (scaled_height, Allocation.Height);
-			Vadjustment.PageIncrement = scaled_height * .9;
-			Vadjustment.StepIncrement = 32;
-			Vadjustment.Upper = scaled_height;
-			Vadjustment.Lower = 0;
-
+			if (Vadjustment != null) {
+				Vadjustment.PageSize = Math.Min (scaled_height, Allocation.Height);
+				Vadjustment.PageIncrement = scaled_height * .9;
+				Vadjustment.StepIncrement = 32;
+				Vadjustment.Upper = scaled_height;
+				Vadjustment.Lower = 0;
+			}
+			
 		}
 
 		event EventHandler AdjustmentsChanged;
@@ -825,25 +935,31 @@ namespace FSpot.Widgets
 
 
 #region selection
-		bool OnSelectionExposeEvent (Cairo.Region evnt)
+		bool OnSelectionExposeEvent (Cairo.Context cr)
 		{
 			if (selection == Rectangle.Zero)
 				return false;
 
-			Cairo.RectangleInt win_selection = ImageCoordsToWindow (selection);
-			using (var evnt_region = evnt.Copy ()) {
-				using (var r = new Cairo.Region ()) {
-					r.UnionRectangle (win_selection);
-					evnt_region.Subtract (r);
-				}
+			cr.Save ();
+			cr.SetSourceRGBA (.5, .5, .5, .7);
+			cr.Rectangle (selection.X, selection.Y, selection.Width, selection.Height);
+			cr.Fill ();
+			cr.Restore ();
 
-				// GTK3: Figure out Window to Cairo.Context
-//				using (Cairo.Context ctx = new Cairo.Context (Window)) {
-//					ctx.SetSourceRGBA (.5, .5, .5, .7);
-//					Gdk.CairoHelper.Region (ctx, evnt_region);                                                                                                                      
-//					ctx.Fill ();
+//			Cairo.RectangleInt win_selection = ImageCoordsToWindow (selection);
+//			using (var evnt_region = evnt.Copy ()) {
+//				using (var r = new Cairo.Region ()) {
+//					r.UnionRectangle (win_selection);
+//					evnt_region.Subtract (r);
 //				}
-			}
+//
+//				// GTK3: Figure out Window to Cairo.Context
+////				using (Cairo.Context ctx = new Cairo.Context (Window)) {
+////					ctx.SetSourceRGBA (.5, .5, .5, .7);
+////					Gdk.CairoHelper.Region (ctx, evnt_region);                                                                                                                      
+////					ctx.Fill ();
+////				}
+//			}
 			return true;
 		}
 

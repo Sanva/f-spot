@@ -40,12 +40,12 @@ namespace FSpot.Widgets
         #region container
 
         protected override void OnAdded (Gtk.Widget widget)
-        {
+		{System.Console.WriteLine ("OnAdded");
             Put (widget, 0, 0);
         }
 
         protected override void OnRemoved (Gtk.Widget widget)
-        {
+		{System.Console.WriteLine ("OnRemoved");
             LayoutChild child = null;
             foreach (var c in children) {
                 if (child.Widget == widget) {
@@ -61,7 +61,7 @@ namespace FSpot.Widgets
         }
 
         protected override void ForAll (bool include_internals, Gtk.Callback callback)
-        {
+		{
             foreach (var child in children) {
                 callback (child.Widget);
             }
@@ -91,7 +91,7 @@ namespace FSpot.Widgets
         }
 
         LayoutChild GetChild (Gtk.Widget widget)
-        {
+		{System.Console.WriteLine ("GetChild");
             foreach (var child in children) {
                 if (child.Widget == widget)
                     return child;
@@ -104,7 +104,7 @@ namespace FSpot.Widgets
         #region Public API
 
         public void Put (Gtk.Widget widget, int x, int y)
-        {
+		{System.Console.WriteLine ("Put");
             children.Add (new LayoutChild (widget, x, y));
             if (IsRealized)
                 widget.ParentWindow = Window;
@@ -112,7 +112,7 @@ namespace FSpot.Widgets
         }
 
         public void Move (Gtk.Widget widget, int x, int y)
-        {
+		{System.Console.WriteLine ("Move");
             LayoutChild child = GetChild (widget);
             if (child == null)
                 return;
@@ -124,14 +124,14 @@ namespace FSpot.Widgets
         }
 
         private void OnRealizedChildren ()
-        {
+		{System.Console.WriteLine ("OnRealizedChildren");
             foreach (var child in children) {
                 child.Widget.ParentWindow = Window;
             }
         }
 
         private void OnMappedChildren ()
-        {
+		{System.Console.WriteLine ("OnMappedChildren");
             foreach (var child in children) {
                 if (child.Widget.Visible && !child.Widget.IsMapped)
                     child.Widget.Map ();
@@ -139,14 +139,14 @@ namespace FSpot.Widgets
         }
 
         private void OnSizeRequestedChildren ()
-        {
+		{System.Console.WriteLine ("OnSizeRequestedChildren");
             foreach (var child in children) {
                 child.Widget.SizeRequest ();
             }
         }
 
         private void OnSizeAllocatedChildren ()
-        {
+		{System.Console.WriteLine ("OnSizeAllocatedChildren");
             foreach (var child in children) {
                 Gtk.Requisition req = child.Widget.ChildRequisition;
                 child.Widget.SizeAllocate (new Gdk.Rectangle (child.X, child.Y, req.Width, req.Height));

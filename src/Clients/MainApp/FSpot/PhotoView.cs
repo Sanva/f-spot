@@ -339,7 +339,14 @@ namespace FSpot
 			photo_view_scrolled.ShadowType = ShadowType.None;
 			photo_view_scrolled.Add (View);
 			photo_view_scrolled.Child.ButtonPressEvent += HandleButtonPressEvent;
+			photo_view_scrolled.ShowAll ();
+
+			photo_view_scrolled.ScrollEvent += (o, args) => {
+				Console.WriteLine ("photo_view_scrolled.ScrollEvent");
+			};
+
 			View.AddEvents ((int) EventMask.KeyPressMask);
+			View.AddEvents ((int) EventMask.ScrollMask);
 			inner_vbox.PackStart (photo_view_scrolled, true, true, 0);
 			inner_hbox.PackStart (inner_vbox, true, true, 0);
 
@@ -370,6 +377,18 @@ namespace FSpot
 
 			Realized += (o, e) => SetColors();
 			Preferences.SettingChanged += OnPreferencesChanged;
+
+			ScrollEvent += (o, args) => {
+				Console.WriteLine ("PhotoView.ScrollEvent");
+
+			};
+		}
+
+		protected override bool OnDrawn (Cairo.Context cr)
+		{
+			Console.WriteLine ("PhotoView.OnDrawn");
+
+			return base.OnDrawn (cr);
 		}
 
 		~PhotoView ()
@@ -395,7 +414,7 @@ namespace FSpot
 		}
 
 		void SetColors ()
-		{
+		{Console.WriteLine ("PhotoView.SetColors");
 			GtkUtil.ModifyColors (filmstrip);
 			GtkUtil.ModifyColors (tag_view);
 			GtkUtil.ModifyColors (View);
