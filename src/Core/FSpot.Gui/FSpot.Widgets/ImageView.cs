@@ -68,29 +68,29 @@ namespace FSpot.Widgets
 
 			AddNotification ("hadjustment", OnHadjustmentChanged);
 
-//			Realized += (object sender, EventArgs e) => {
-//				Console.WriteLine ("ImageView.Realized");
-//
-//				Window.Events |= EventMask.ExposureMask
-//				           | EventMask.ButtonPressMask
-//				           | EventMask.ButtonReleaseMask
-//				           | EventMask.PointerMotionMask
-//				           | EventMask.PointerMotionHintMask
-//				           | EventMask.ScrollMask
-//				           | EventMask.KeyPressMask
-//				           | EventMask.LeaveNotifyMask;
-//
-//				Window.Events = EventMask.AllEventsMask;
-////				Window.Events |= EventMask.ButtonPressMask;
-//
-//				Window.BackgroundPattern = null;
-////				Window.UserData = Handle;
-//
-//				Style.Attach (Window);
-//				Style.SetBackground (Window, StateType.Normal);
-//
-//				OnRealizedChildren ();
-//			};
+			Realized += (object sender, EventArgs e) => {
+				Console.WriteLine ("ImageView.Realized");
+
+				Window.Events |= EventMask.ExposureMask
+				           | EventMask.ButtonPressMask
+				           | EventMask.ButtonReleaseMask
+				           | EventMask.PointerMotionMask
+				           | EventMask.PointerMotionHintMask
+				           | EventMask.ScrollMask
+				           | EventMask.KeyPressMask
+				           | EventMask.LeaveNotifyMask;
+
+				Window.Events = EventMask.AllEventsMask;
+//				Window.Events |= EventMask.ButtonPressMask;
+
+				Window.BackgroundPattern = null;
+//				Window.UserData = Handle;
+
+				Style.Attach (Window);
+				Style.SetBackground (Window, StateType.Normal);
+
+				OnRealizedChildren ();
+			};
 
 			ScrollEvent += (o, args) => {
 				Console.WriteLine ("PhotoView.ScrollEvent");
@@ -359,41 +359,41 @@ namespace FSpot.Widgets
 
 #region GtkWidgetry
 
-        protected override void OnRealized ()
-        {
-//			if (!Parent.IsRealized)
-//				Parent.Realize ();
-
-			IsRealized = true;
-            Window = new Gdk.Window (ParentWindow,
-					new WindowAttr { 
-                        WindowType = Gdk.WindowType.Child,
-                        X = Allocation.X,
-                        Y = Allocation.Y,
-                        Width = Allocation.Width,
-                        Height = Allocation.Height,
-						Wclass = WindowWindowClass.InputOutput,
-                        Visual = ParentWindow.Visual,
-                        Mask = Events
-							| EventMask.ExposureMask
-                            | EventMask.ButtonPressMask
-                            | EventMask.ButtonReleaseMask
-                            | EventMask.PointerMotionMask
-                            | EventMask.PointerMotionHintMask
-                            | EventMask.ScrollMask
-                            | EventMask.KeyPressMask
-                            | EventMask.LeaveNotifyMask
-                    },
-					WindowAttributesType.X | WindowAttributesType.Y | WindowAttributesType.Visual);
-
-			Window.BackgroundPattern = null;
-            Window.UserData = Handle;
-
-            Style.Attach (Window);
-            Style.SetBackground (Window, StateType.Normal);
-
-            OnRealizedChildren ();
-        }
+//        protected override void OnRealized ()
+//        {
+////			if (!Parent.IsRealized)
+////				Parent.Realize ();
+//
+//			IsRealized = true;
+//            Window = new Gdk.Window (ParentWindow,
+//					new WindowAttr { 
+//                        WindowType = Gdk.WindowType.Child,
+//                        X = Allocation.X,
+//                        Y = Allocation.Y,
+//                        Width = Allocation.Width,
+//                        Height = Allocation.Height,
+//						Wclass = WindowWindowClass.InputOutput,
+//                        Visual = ParentWindow.Visual,
+//                        Mask = Events
+//							| EventMask.ExposureMask
+//                            | EventMask.ButtonPressMask
+//                            | EventMask.ButtonReleaseMask
+//                            | EventMask.PointerMotionMask
+//                            | EventMask.PointerMotionHintMask
+//                            | EventMask.ScrollMask
+//                            | EventMask.KeyPressMask
+//                            | EventMask.LeaveNotifyMask
+//                    },
+//					WindowAttributesType.X | WindowAttributesType.Y | WindowAttributesType.Visual);
+//
+//			Window.BackgroundPattern = null;
+//            Window.UserData = Handle;
+//
+//            Style.Attach (Window);
+//            Style.SetBackground (Window, StateType.Normal);
+//
+//            OnRealizedChildren ();
+//        }
 
         protected override void OnMapped ()
         {
